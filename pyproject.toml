@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rf"
+version = "0.1.0"
+description = "A CLI tool for RF engineers"
+authors = [{name = "Rasmus Ravn Andersen", email = "rasmusravna@gmail.com"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.9.2",
+    "platformdirs>=4.3.6",
+    "scikit-rf>=1.4.1",
+    "termplotlib>=0.3.9",
+    "typer[all]>=0.13.1",
+]
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"License :: OSI Approved :: MIT License",
+	"Operating System :: OS Independent",
+]
+[project.scripts]
+rf = "rf.cli:app"
