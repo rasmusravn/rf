@@ -1,9 +1,17 @@
+import subprocess
+import sys
+import tempfile
+from importlib.resources import files
+from typing import Annotated, Optional
+
 import tomllib
 import typer
 
 app = typer.Typer(no_args_is_help=True)
 
-with open("pyproject.toml", "rb") as f:
+pyproject_path = files("rf").joinpath("../pyproject.toml")
+
+with pyproject_path.open("rb") as f:
     pyprojecttoml = tomllib.load(f)
 
 data = {
@@ -25,11 +33,42 @@ def calculate() -> None:
 
 
 @app.command()
-def visualize() -> None:
+def visualize(
+    file_type: str = typer.Option(
+        "s2p", help="Type of file to process (s2p or csv)", case_sensitive=False
+    ),
+    file: Annotated[Optional[str], typer.Argument()] = None,
+) -> None:
     """
-    Get a dashboard of visualizations by inputting a csv- or s2p-file.
+    Launch a Streamlit visualization app.
     """
-    typer.echo("visualizing done")
+    valid_file_types = {"s2p", "csv"}
+    if file_type.lower() not in valid_file_types:
+        raise typer.BadParameter(
+            f"Invalid file type '{file_type}'. Must be one of {valid_file_types}."
+        )
+    # Determine input source
+    if file:
+        typer.echo(f"Visualizing data from file: {file}")
+        data_source = file
+    elif not sys.stdin.isatty():  # Check if stdin has input
+        typer.echo("Reading data from stdin...")  # Validate file type
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=f".{file_type.lower()}", mode="wb"
+        ) as temp_file:
+            data = sys.stdin.read()
+            temp_file.write(data.encode("utf-8"))
+            data_source = temp_file.name
+            typer.echo(data_source)
+
+    # Locate the visualizer script
+    visualizer_script = files("rf").joinpath("visualize/page1.py")
+
+    # Pass the file and file type to the Streamlit app
+    typer.echo(f"Launching Streamlit app with {file_type}")
+    subprocess.run(
+        ["streamlit", "run", str(visualizer_script), "--", data_source, file_type]
+    )
 
 
 @app.command()
